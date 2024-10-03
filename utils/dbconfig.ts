@@ -12,19 +12,19 @@ import {
 const REGION = "ap-south-1";
 
 if (
-  !process.env.AWS_ACCESS_KEY_ID ||
-  !process.env.AWS_SECRET_KEY
+  !process.env.ACCESS_KEY_ID ||
+  !process.env.SECRET_KEY
 ) {
   throw new Error(
-    "Cannot Read env variable AWS_ACCESS_KEY_ID or AWS_SECRET_KEY"
+    "Cannot Read env variable ACCESS_KEY_ID or SECRET_KEY"
   );
 }
 
 const ddbClientConfig: DynamoDBClientConfig = {
   region: REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_KEY,
+    accessKeyId: process.env.ACCESS_KEY_ID,
+    secretAccessKey: process.env.SECRET_KEY,
   },
 };
 
