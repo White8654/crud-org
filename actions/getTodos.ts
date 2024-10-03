@@ -6,27 +6,24 @@ import {
   ScanCommandOutput,
 } from "@aws-sdk/lib-dynamodb";
 
-export interface TodoItem {
-  id: number;
-  todo: string;
-  status: boolean;
+export interface OrgItem {
+   id: number;
+   orgName: string;
+   Type: string;
+   Status: string;
+   Active: boolean;
+   LastUpdated: string;
 }
 
-export const getTodos = async () => {
+export const getOrgs = async () => {
   try {
     const data: ScanCommandOutput = await ddbDocClient.send(
       new ScanCommand({
-        TableName: "todo",
-        FilterExpression: "#status = :statusVal",
-        ExpressionAttributeNames: {
-          "#status": "status",
-        },
-        ExpressionAttributeValues: {
-          ":statusVal": false,
-        },
+        TableName: "Organizations",
+        
       })
     );
-    return (data.Items as TodoItem[]) || [];
+    return (data.Items as OrgItem[]) || [];
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Database Error: Failed to get Todos.");

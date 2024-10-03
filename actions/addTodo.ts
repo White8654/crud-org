@@ -3,27 +3,33 @@
 import { ddbDocClient } from "@/utils/dbconfig";
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
 
-export interface TodoItem {
+export interface OrgItem {
   id: number;
-  todo: string;
-  status: boolean;
+  orgName: string;
+  Type: string;
+  Status: string;
+  Active: boolean;
+  LastUpdated: string;
 }
 
-export const addTodo = async (todo: string) => {
+export const addOrg = async (orgName: string, type: string, status: string, active: boolean) => {
   try {
     const params = {
-      TableName: "todo",
+      TableName: "Organizations",
       Item: {
-        id: Math.floor(Math.random() * 10000),
-        todo: todo,
-        status: false,
+        id: Math.floor(Math.random() * 10000), // Generate a random ID
+        orgName: orgName,                      // Use the orgName parameter
+        Type: type,                            // Use the type parameter
+        Status: status,                        // Use the status parameter
+        Active: active,                        // Use the active parameter
+        LastUpdated: new Date().toISOString(), // Set LastUpdated to current time
       },
     };
+
     await ddbDocClient.send(new PutCommand(params));
+    console.log("Organization added successfully:", params.Item);
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error(
-      "Database Error: Failed to create Todo."
-    );
+    throw new Error("Database Error: Failed to create organization.");
   }
 };

@@ -3,11 +3,11 @@
 import { ddbDocClient } from "@/utils/dbconfig";
 import { DeleteCommand } from "@aws-sdk/lib-dynamodb";
 
-export const deleteTodo = async (id: number) => {
+export const deleteOrg = async (id: number) => {
   try {
     await ddbDocClient.send(
       new DeleteCommand({
-        TableName: "todo",
+        TableName: "Organizations",
         Key: {
           id: id,
         },

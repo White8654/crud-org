@@ -3,37 +3,46 @@
 import { ddbDocClient } from "@/utils/dbconfig";
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 
-export interface TodoItem {
+export interface OrgItem {
   id: number;
-  todo: string;
-  status: boolean;
+  orgName: string;
+  Type: string;
+  Status: string;
+  Active: boolean;
+  LastUpdated: string;
 }
 
-export const updateTodo = async ({
+export const updateOrg = async ({
   id,
-  todo,
-  status,
-}: TodoItem) => {
+  orgName,
+  Type,
+  Status,
+  Active,
+}: OrgItem) => {
   try {
     await ddbDocClient.send(
       new UpdateCommand({
-        TableName: "todo",
+        TableName: "Organizations", // Use the correct table name
         Key: { id },
         UpdateExpression:
-          "set todo = :todoVal, #status = :statusVal",
+          "set orgName = :orgNameVal, #type = :typeVal, #status = :statusVal, Active = :activeVal, LastUpdated = :lastUpdatedVal",
         ExpressionAttributeNames: {
-          "#status": "status",
+          "#type": "Type",
+          "#status": "Status",
         },
         ExpressionAttributeValues: {
-          ":todoVal": todo,
-          ":statusVal": status,
+          ":orgNameVal": orgName,
+          ":typeVal": Type,
+          ":statusVal": Status,
+          ":activeVal": Active,
+          ":lastUpdatedVal": new Date().toISOString(), // Update LastUpdated to current time
         },
       })
     );
+
+    console.log("Organization updated successfully:", { id, orgName, Type, Status, Active });
   } catch (error) {
     console.error("Database Error:", error);
-    throw new Error(
-      "Database Error: Failed to update Todo."
-    );
+    throw new Error("Database Error: Failed to update organization.");
   }
 };

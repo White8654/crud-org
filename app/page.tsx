@@ -1,24 +1,29 @@
 "use client";
 
-import { addTodo } from "@/actions/addTodo";
-import { deleteTodo } from "@/actions/deleteTodo";
-import { getTodos } from "@/actions/getTodos";
-import { updateTodo } from "@/actions/updateTodo";
+import { addOrg } from "@/actions/addTodo";
+import { getOrgs } from "@/actions/getTodos";
 import Popup from "@/components/Popup";
 import { FormEvent, useEffect, useState } from "react";
+import { useRouter } from "next/navigation"; // Import useRouter
 
-interface Todo {
+interface Org {
   id: number;
-  todo: string;
-  status: boolean;
+  orgName: string;
+  Type: string;
+  Status: string;
+  Active: boolean;
+  LastUpdated: string;
 }
 
 export default function Home() {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
-  const [tableData, setTableData] = useState<Todo[]>([]);
-  const [editTodo, setEditTodo] = useState<
-    Todo | undefined
-  >();
+  const [tableData, setTableData] = useState<Org[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filteredData, setFilteredData] = useState<Org[]>([]);
+  const [page, setPage] = useState(1);
+  const itemsPerPage = 5;
+
+  const router = useRouter(); // Initialize the router for navigation
 
   const openPopup = () => {
     setIsPopupOpen(true);
@@ -26,56 +31,42 @@ export default function Home() {
 
   const closePopup = () => {
     setIsPopupOpen(false);
-    setEditTodo(undefined);
   };
 
   const loadTableData = async () => {
     try {
-      const todos: Todo[] = await getTodos();
-      setTableData(todos);
+      const orgs: Org[] = await getOrgs();
+      setTableData(orgs);
+      setFilteredData(orgs);
     } catch (error) {
-      throw error;
+      console.error("Error loading organizations:", error);
     }
   };
 
-  const handleTodoSubmit = async (
-    event: FormEvent<HTMLFormElement>
-  ) => {
+  const handleOrgSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const target = event.target as typeof event.target & {
-      todo: { value: string };
+      orgName: { value: string };
+      type: { value: string };
+      status: { value: string };
+      active: { checked: boolean }; // Add this line
+    };
+
+    const newOrg: Org = {
+      id: Math.floor(Math.random() * 10000), // Temporary ID
+      orgName: target.orgName.value,
+      Type: target.type.value,
+      Status: target.status.value,
+      Active: target.active.checked, // Use checked property for Active
+      LastUpdated: new Date().toISOString(),
     };
 
     try {
-      if (editTodo) {
-        await updateTodo(editTodo);
-      } else {
-        await addTodo(target.todo.value);
-      }
-
+      await addOrg(newOrg.orgName, newOrg.Type, newOrg.Status, newOrg.Active);
       closePopup();
       loadTableData();
     } catch (error) {
-      throw error;
-    }
-  };
-
-  const doneTodo = async (todo: Todo) => {
-    try {
-      await updateTodo({ ...todo, status: true });
-      await loadTableData();
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  const deleteItem = async (id: number) => {
-    try {
-      await deleteTodo(id);
-      await loadTableData();
-    } catch (error) {
-      throw error;
+      console.error("Error submitting organization:", error);
     }
   };
 
@@ -83,124 +74,150 @@ export default function Home() {
     loadTableData();
   }, []);
 
+  useEffect(() => {
+    const filtered = tableData.filter((org) =>
+      org.orgName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredData(filtered);
+  }, [searchTerm, tableData]);
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const currentData = filteredData.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
   return (
-    <main className="bg-gray-800 w-4/5 mx-auto mt-20 p-5 rounded-lg">
+    <main className="bg-white w-4/5 mx-auto mt-20 p-5 rounded-lg shadow-lg">
       <div className="flex justify-between items-center mb-3">
-        <div className="text-3xl text-white">Todos</div>
+        <div className="text-3xl text-black">Organizations</div>
         <button
           onClick={openPopup}
-          className="bg-blue-500 text-white px-5 py-3 text-xl rounded-xl"
+          className="bg-blue-500 text-white px-5 py-2 rounded-xl"
         >
-          Add Todo
+          Add Organization
         </button>
       </div>
-      <Popup isOpen={isPopupOpen} onClose={closePopup}>
-        <form
-          onSubmit={handleTodoSubmit}
-          className="mx-auto"
-        >
-          <div className="mb-5">
-            <label
-              htmlFor="todo"
-              className="block mb-2 text-sm font-medium text-white"
-            >
-              Todo
-            </label>
 
-            {editTodo ? (
-              <input
-                type="text"
-                id="todo"
-                placeholder="Enter your task"
-                className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white shadow-sm-light"
-                value={editTodo.todo}
-                onChange={(e: any) =>
-                  setEditTodo((prev) =>
-                    prev
-                      ? { ...prev, todo: e.target.value }
-                      : {
-                          id: 0,
-                          todo: e.target.value,
-                          status: false,
-                        }
-                  )
-                }
-                required
-              />
-            ) : (
-              <input
-                type="text"
-                id="todo"
-                placeholder="Enter your task"
-                className="text-sm rounded-lg block w-full p-2.5 bg-gray-700 border-gray-600 placeholder-gray-400 text-white shadow-sm-light"
-                required
-              />
-            )}
+      <div className="mb-5">
+        <input
+          type="text"
+          placeholder="Search organizations..."
+          className="border text-black rounded-lg w-full p-2"
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      <Popup isOpen={isPopupOpen} onClose={closePopup}>
+        <form onSubmit={handleOrgSubmit} className="mx-auto">
+          <div className="mb-5">
+            <label htmlFor="orgName" className="block mb-2 text-sm font-medium text-black">
+              Organization Name
+            </label>
+            <input
+              type="text"
+              id="orgName"
+              placeholder="Enter organization name"
+              className="border rounded-lg block w-full p-2"
+              required
+            />
           </div>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg"
-          >
-            {editTodo ? "Update Todo" : "Add Todo"}
+          <div className="mb-5">
+            <label htmlFor="type" className="block mb-2 text-sm font-medium text-black">
+              Type
+            </label>
+            <select
+              id="type"
+              className="border rounded-lg block w-full p-2"
+              required
+            >
+              <option value="" disabled selected>Select type</option>
+              <option value="--None--">--None--</option>
+              <option value="Sandbox">Sandbox</option>
+              <option value="Production">Production</option>
+            </select>
+          </div>
+          <div className="mb-5">
+            <label htmlFor="status" className="block mb-2 text-sm font-medium text-black">
+              Status
+            </label>
+            <select
+              id="status"
+              className="border rounded-lg block w-full p-2"
+              required
+            >
+              <option value="" disabled selected>Select status</option>
+              <option value="--None--">--None--</option>
+              <option value="New">New</option>
+              <option value="Authenticated">Authenticated</option>
+              <option value="Auth-Expired">Auth-Expired</option>
+              {/* Add more options as needed */}
+            </select>
+          </div>
+          <div className="mb-5">
+            <label htmlFor="active" className="block mb-2 text-sm font-medium text-black">
+              Active
+            </label>
+            <input
+              type="checkbox"
+              id="active"
+              className="border rounded-lg block w-4 h-4"
+            />
+          </div>
+          <button type="submit" className="px-4 py-2 bg-blue-500 text-white rounded-lg">
+            Add Organization
           </button>
         </form>
       </Popup>
+
       <div className="mt-5">
         <table className="w-full border rounded-xl overflow-hidden">
-          <thead className="bg-blue-900">
+          <thead className="bg-gray-800">
             <tr>
-              <th className="text-center py-3 border border-gray-500 text-lg">
-                Done
+              <th className="text-left py-3 text-lg px-4 text-white" style={{ width: '10%' }}>
+                #
               </th>
-              <th className="text-center py-3 border border-gray-500 text-lg">
-                Task
+              <th className="text-left py-3 text-lg px-4 text-white" style={{ width: '65%' }}>
+                Organization Name
               </th>
-
-              <th className="text-center py-3 border border-gray-500 text-lg">
-                Edit
-              </th>
-
-              <th className="text-center py-3 border border-gray-500 text-lg">
-                Delete
+              <th className="text-left py-3 text-lg px-4 text-white" style={{ width: '25%' }}>
+                Last Updated
               </th>
             </tr>
           </thead>
           <tbody>
-            {tableData &&
-              tableData.map((row, idx) => (
-                <tr
-                  key={idx}
-                  className="text-center odd:bg-gray-700 even:bg-gray-600"
-                >
-                  <td className="py-3 border border-gray-500">
-                    <button onClick={() => doneTodo(row)}>
-                      <div className="w-4 h-4 cursor-pointer border border-white rounded-sm"></div>
-                    </button>
-                  </td>
-                  <td className="py-3 border border-gray-500">
-                    {row.todo}
-                  </td>
-                  <td className="py-3 border border-gray-500">
-                    <button
-                      onClick={() => {
-                        setEditTodo(row);
-                        setIsPopupOpen(true);
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </td>
-                  <td className="py-3 border border-gray-500">
-                    <button
-                      onClick={() => deleteItem(row.id)}
-                    >
-                      Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+            {currentData.map((row, index) => (
+              <tr key={row.id} className="text-left text-black odd:bg-gray-100 even:bg-gray-50 cursor-pointer"
+                  onClick={() => router.push(`/org/${row.id}`)} // Redirect to organization details
+              >
+                <td className="py-3 px-4" style={{ width: '10%' }}>{(page - 1) * itemsPerPage + index + 1}</td>
+                <td className="py-3 px-4" style={{ width: '65%' }}>
+                  <span className="text-blue-500 cursor-pointer hover:underline">{row.orgName}</span>
+                </td>
+                <td className="py-3 px-4" style={{ width: '25%' }}>{new Date(row.LastUpdated).toLocaleString()}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-5 flex justify-between items-center">
+        <div className="text-black">
+          Showing {currentData.length} of {filteredData.length} items
+        </div>
+        <div>
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((prev) => prev - 1)}
+            className="bg-blue-500 text-white px-3 py-1 rounded-lg mr-2"
+          >
+            Previous
+          </button>
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((prev) => prev + 1)}
+            className="bg-blue-500 text-white px-3 py-1 rounded-lg"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </main>
   );
