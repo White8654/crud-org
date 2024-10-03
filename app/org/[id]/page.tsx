@@ -104,7 +104,7 @@ export default function OrgDetails() {
                   {isEditing.orgName ? (
                     <input
                       type="text"
-                      value={editedOrg.orgName}
+                      value={editedOrg?.orgName || ''} // Use optional chaining
                       onChange={(e) => handleEditField('orgName', e.target.value)}
                       className="border border-gray-300 rounded p-2 transition duration-300 ease-in-out focus:outline-none focus:border-blue-500"
                     />
@@ -122,11 +122,11 @@ export default function OrgDetails() {
                 <div className="flex items-center">
                   {isEditing.Type ? (
                     <select
-                      value={editedOrg.Type}
+                      value={editedOrg?.Type || '--None--'} // Use optional chaining
                       onChange={(e) => handleEditField('Type', e.target.value)}
                       className="border border-gray-300 rounded p-2 transition duration-300 ease-in-out focus:outline-none focus:border-blue-500"
                     >
-                       <option value="--None--">--None--</option>
+                      <option value="--None--">--None--</option>
                       <option value="Sandbox">Sandbox</option>
                       <option value="Production">Production</option>
                     </select>
@@ -144,10 +144,11 @@ export default function OrgDetails() {
                 <div className="flex items-center">
                   {isEditing.Status ? (
                     <select
-                      value={editedOrg.Status}
+                      value={editedOrg?.Status || '--None--'} // Use optional chaining
                       onChange={(e) => handleEditField('Status', e.target.value)}
                       className="border border-gray-300 rounded p-2 transition duration-300 ease-in-out focus:outline-none focus:border-blue-500"
-                    ><option value="--None--">--None--</option>
+                    >
+                      <option value="--None--">--None--</option>
                       <option value="New">New</option>
                       <option value="Authenticated">Authenticated</option>
                       <option value="Auth-Expired">Auth-Expired</option>
@@ -166,7 +167,7 @@ export default function OrgDetails() {
                 <div className="flex items-center">
                   {isEditing.Active ? (
                     <select
-                      value={editedOrg.Active ? "true" : "false"}
+                      value={editedOrg?.Active ? "true" : "false"} // Use optional chaining
                       onChange={(e) => handleEditField('Active', e.target.value === "true")}
                       className="border border-gray-300 rounded p-2 transition duration-300 ease-in-out focus:outline-none focus:border-blue-500"
                     >
