@@ -30,6 +30,7 @@ export default function OrgDetails() {
   const [hasChanges, setHasChanges] = useState(false);
   const [authResult, setAuthResult] = useState<AuthResult | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [showIframe, setShowIframe] = useState(false); // State for iframe visibility
 
   useEffect(() => {
     if (id) {
@@ -105,6 +106,9 @@ export default function OrgDetails() {
         if (response.ok) {
           const [result] = await response.json();
           setAuthResult(result);
+          if (result.verification_url) {
+            setShowIframe(true); // Show iframe when authentication result is received
+          }
         } else {
           const errorData = await response.json();
           setAuthResult({ message: errorData.message || 'Failed to authenticate.' });
@@ -239,11 +243,11 @@ export default function OrgDetails() {
                         onChange={(e) => handleEditField('Active', e.target.value === "true")}
                         className="border border-gray-300 rounded p-2 focus:outline-none focus:border-blue-500"
                       >
-                        <option value="true">Yes</option>
                         <option value="false">No</option>
+                        <option value="true">Yes</option>
                       </select>
                     ) : (
-                      <span className="text-gray-600">{org.Active ? "Yes" : "No"}</span>
+                      <span className="text-gray-600">{org.Active ? 'Yes' : 'No'}</span>
                     )}
                     <FiEdit
                       className="ml-2 cursor-pointer text-blue-500 hover:text-blue-700 transition duration-200"
@@ -281,7 +285,7 @@ export default function OrgDetails() {
             <div className="mt-8 p-4 border-t border-gray-200">
               {isAuthLoading ? (
                 <div className="flex justify-center items-center">
-                  <div className="loader"></div> {/* Spinner while loading */}
+                  <div className="loader"></div>
                   <span className="ml-2 text-gray-600">Authenticating...</span>
                 </div>
               ) : (
@@ -290,11 +294,11 @@ export default function OrgDetails() {
                     {authResult.device_code && (
                       <div>
                         <p>Device Code: <span className="text-black font-bold">{authResult.device_code}</span></p>
-                        <p>Verification URL: 
+                        {/* <p>Verification URL: 
                           <a href={authResult.verification_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 underline ml-2">
                             {authResult.verification_url}
                           </a>
-                        </p>
+                        </p> */}
                       </div>
                     )}
                     {authResult.message && !authResult.device_code && (
@@ -304,6 +308,23 @@ export default function OrgDetails() {
                 )
               )}
             </div>
+
+            {/* Iframe for Verification URL */}
+            {/* Iframe for Verification URL */}
+{showIframe && authResult?.verification_url && (
+  <div className="mt-8 border-t border-gray-200 pt-4">
+    <h2 className="text-xl font-semibold mb-4">Verification</h2>
+    <div className="overflow-hidden" style={{ width: '100%', height: '600px', position: 'relative' }}>
+      <iframe
+        src={authResult.verification_url}
+        title="Verification"
+        className="absolute top-0 left-0 w-full h-full"
+        style={{ transform: 'scale(1)', transformOrigin: '0 0', border: 'none' }}
+      />
+    </div>
+  </div>
+)}
+
           </>
         ) : (
           <div className="text-center text-gray-600">Organization not found</div>
