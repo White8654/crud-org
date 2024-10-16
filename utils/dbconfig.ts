@@ -9,7 +9,7 @@ import {
   TranslateConfig,
 } from "@aws-sdk/lib-dynamodb";
 
-const REGION = "ap-south-1";
+const REGION = process.env.REGION;
 
 if (
   !process.env.ACCESS_KEY_ID ||
